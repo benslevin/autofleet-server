@@ -6,6 +6,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.util.ArrayList;
 import java.util.Map;
 
 @RestController
@@ -20,4 +21,8 @@ public class CarController {
         return carLocationService.getAll();
     }
 
+    @GetMapping("/polygon")
+    public Map<String, Location> getLocationOfCarInPolygon(ArrayList<Location> polygon){
+        return carLocationService.getAllCarsInPolygon(polygon);
+    }
 }

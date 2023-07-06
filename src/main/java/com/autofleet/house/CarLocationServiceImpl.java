@@ -6,6 +6,7 @@ import org.json.simple.JSONObject;
 import org.json.simple.parser.JSONParser;
 
 import java.io.FileReader;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -37,6 +38,24 @@ public class CarLocationServiceImpl implements CarLocationService {
                 .collect(Collectors.toMap(Map.Entry::getKey,Map.Entry::getValue));
     }
 
+    @Override
+    public Map<String, Location> getAllCarsInPolygon(ArrayList<Location> polygon) {
+        //check which cars are inside the polygon
+        Map<String,Location> carInsidePolygon = new HashMap<>();
+
+        Map<String, Location> carIdToLocation = getAll();
+
+        for (Map.Entry<String,Location> car : carIdToLocation.entrySet()) {
+            Location location = new Location(car.getValue().getLat(), car.getValue().getLng(), 0);
+            if (isCarInsidePolygon(location, polygon)) {
+                carInsidePolygon.put(car.getKey(), car.getValue());
+            }
+        }
+
+        //return list of points to display
+        return carInsidePolygon;
+    }
+
     private void readJson() {
         JSONParser parser = new JSONParser();
         try {
@@ -63,6 +82,41 @@ public class CarLocationServiceImpl implements CarLocationService {
         } catch (Exception e) {
             e.printStackTrace();
         }
+    }
 
+    private boolean isCarInsidePolygon(Location location, ArrayList<Location> polygon) {
+
+        double minX = polygon.get(0).getLat();
+        double maxX = polygon.get(0).getLat();
+        double minY = polygon.get(0).getLng();
+        double maxY = polygon.get(0).getLng();
+
+        for (Location polygonPoint: polygon) {
+            minX = Math.min(polygonPoint.getLat(), minX);
+            maxX = Math.max(polygonPoint.getLat(), maxX);
+            minX = Math.min(polygonPoint.getLng(), minX);
+            maxX = Math.max(polygonPoint.getLng(), maxX);
+        }
+
+        //check x & y
+        if (location.getLat() < minX || location.getLat() > maxX || location.getLng() < minY || location.getLng() > maxY)
+        {
+            return false;
+        }
+
+        //check crossing
+        boolean inside = false;
+        for (int i = 0, j = polygon.size() - 1; i < polygon.size(); j = i++)
+        {
+            if ((polygon.get(i).getLng() > location.getLng()) != (polygon.get(j).getLng() > location.getLng()) &&
+                    location.getLat() < ((polygon.get(j).getLat() - polygon.get(i).getLat()) *
+                            (location.getLng() - polygon.get(i).getLng()) /
+                            (polygon.get(j).getLng() - polygon.get(i).getLng()) + polygon.get(i).getLat()))//end if
+            {
+                inside = !inside;
+            }
+        }
+
+        return inside;
     }
 }
