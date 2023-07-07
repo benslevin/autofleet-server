@@ -14,7 +14,11 @@ import java.util.stream.Collectors;
 
 public class CarLocationServiceImpl implements CarLocationService {
 
-    public static final String VEHICLES_LOCATION_JSON_PATH = "src/main/resources/vehicles-location.json";
+    //for the build to send to the server
+    public static final String VEHICLES_LOCATION_JSON_PATH = "vehicles-location.json";
+
+    //for local use for testing
+    //public static final String VEHICLES_LOCATION_JSON_PATH = "src/main/resources/vehicles-location.json";
     private final Map<String, Location> carIdToPosition = new HashMap<>();
 
     public CarLocationServiceImpl() {
@@ -39,22 +43,46 @@ public class CarLocationServiceImpl implements CarLocationService {
     }
 
     @Override
-    public Map<String, Location> getAllCarsInPolygon(ArrayList<Location> polygon) {
+    public JSONObject getAllCarsInPolygon(ArrayList<Location> polygon) {
         //check which cars are inside the polygon
         Map<String,Location> carInsidePolygon = new HashMap<>();
 
         Map<String, Location> carIdToLocation = getAll();
 
         for (Map.Entry<String,Location> car : carIdToLocation.entrySet()) {
-            Location location = new Location(car.getValue().getLat(), car.getValue().getLng(), 0);
+            Location location = new Location(car.getValue().getLat(), car.getValue().getLng());
             if (isCarInsidePolygon(location, polygon)) {
                 carInsidePolygon.put(car.getKey(), car.getValue());
             }
         }
 
-        //return list of points to display
-        return carInsidePolygon;
+        System.out.println(carInsidePolygon);
+
+        return convertToJSONFile(carInsidePolygon);
     }
+
+    private JSONObject convertToJSONFile(Map<String,Location> carInsidePolygon) {
+
+        JSONObject jsonObject = new JSONObject();
+        try {
+            for (Map.Entry<String, Location> entry : carInsidePolygon.entrySet()) {
+                String key = entry.getKey();
+                Location location = entry.getValue();
+
+                JSONObject locationJson = new JSONObject();
+                locationJson.put("lat", location.getLat());
+                locationJson.put("lng", location.getLng());
+
+                jsonObject.put(key, locationJson);
+            }
+        }
+        catch (Exception e){
+            e.printStackTrace();
+        }
+
+        return jsonObject;
+    }
+
 
     private void readJson() {
         JSONParser parser = new JSONParser();
@@ -74,7 +102,7 @@ public class CarLocationServiceImpl implements CarLocationService {
                 double longitude = (double) locationJson.get("lng");
                 long bearing = (long) locationJson.get("bearing");
 
-                Location location = new Location(latitude, longitude, bearing);
+                Location location = new Location(latitude, longitude);
                 carIdToPosition.put(id, location);
             }
             System.out.println("Finished loading all car locations");
@@ -94,8 +122,8 @@ public class CarLocationServiceImpl implements CarLocationService {
         for (Location polygonPoint: polygon) {
             minX = Math.min(polygonPoint.getLat(), minX);
             maxX = Math.max(polygonPoint.getLat(), maxX);
-            minX = Math.min(polygonPoint.getLng(), minX);
-            maxX = Math.max(polygonPoint.getLng(), maxX);
+            minY = Math.min(polygonPoint.getLng(), minY);
+            maxY = Math.max(polygonPoint.getLng(), maxY);
         }
 
         //check x & y

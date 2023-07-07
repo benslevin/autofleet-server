@@ -1,5 +1,7 @@
 package com.autofleet.house;
 
+import org.json.simple.JSONObject;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Map;
@@ -12,5 +14,5 @@ public interface CarLocationService {
 
     Map<String, Location> getPositionsByCarIds(Collection<String> carIds);
 
-    Map<String, Location> getAllCarsInPolygon(ArrayList<Location> polygon);
+    JSONObject getAllCarsInPolygon(ArrayList<Location> polygon);
 }
